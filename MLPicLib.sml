@@ -17,13 +17,15 @@
  *)
 
 signature PICLIB = sig
-    type color = int * int * int
+    (* A colour is a triplet of red, green and blue values, in that
+    order, each going from 0 to 255. *)
+    type colour = int * int * int
     type image
 
     val readBMP : string -> image
     val writeBMP : string * image -> unit
 
-    val recolor : (color -> color) -> image -> image
+    val recolour : (colour -> colour) -> image -> image
     val transform : (real*real -> real*real) -> image -> image
     val scale : real -> image -> image
     val clockwise : image -> image
@@ -31,7 +33,7 @@ signature PICLIB = sig
     val torben : image
 end
 
-structure PicLib : PICLIB = struct
+structure PicLib :> PICLIB = struct
 fun pad4 x = ~4*(~x div 4)
 (* For 0xRRGGBB, returns (0xRR, 0xGG, 0xBB) *)
 fun channels x =
@@ -99,8 +101,8 @@ fun writebmp (w,h,c,t) s = let
                 write (i+1) end
 in write 0; BinIO.closeOut fh end end
 
-type color = int * int * int
-type image = int * int * ((int*int) -> color)
+type colour = int * int * int
+type image = int * int * ((int*int) -> colour)
 
 fun readBMP s =
     let val (w,h,_,t) = readbmp s
@@ -115,7 +117,7 @@ fun writeBMP (s, (w, h, pixel)) =
         val c = Word8Vector.fromList []
     in writebmp (w,h,c,pixel') s end
 
-fun recolor f (w,h,pixel) = (w,h, f o pixel)
+fun recolour f (w,h,pixel) = (w,h, f o pixel)
 
 fun transform f (w,h,pixel) =
     let fun toSq (x,y) = (2.0*real x/real w - 1.0,
@@ -146,6 +148,13 @@ fun beside (w1,h1,pixel1) (w2,h2,pixel2) =
 val torben = readBMP "torben.bmp"
 end
 
+(* Example colours *)
+
+val red = (255,0,0)
+val green = (0,0,255)
+val blue = (0,0,255)
+val pink = (255,100,100)
+
 (* Example transformations (for PicLib.transform), from
 http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm *)
 fun relf(x,y)=(~x:real,y);
@@ -161,11 +170,17 @@ fun shear(x,y)=(x+y/2.0,y);
 fun polo(x,y)=(2.0*Math.atan(x/y)/3.1415,Math.sqrt(x*x+y*y)-0.2);
 
 (* Example operations. *)
-val invertColours = PicLib.recolor (fn (r,g,b) => (255-r, 255-g, 255-b))
+val invertColours = PicLib.recolour (fn (r,g,b) => (255-r, 255-g, 255-b))
 
-val desaturate = PicLib.recolor (fn (r,g,b) =>
+val desaturate = PicLib.recolour (fn (r,g,b) =>
                                     let val x = (r+g+b) div 3
                                     in (x, x, x) end)
+
+fun warhol colours =
+    let val n = length colours
+        val step = ceil (255.0 / real n)
+        fun newcolour x = List.nth(colours, x div step)
+    in PicLib.recolour (fn (r,g,b) => newcolour ((r+g+b) div 3)) end
 
 val counterClockwise = PicLib.clockwise o PicLib.clockwise o PicLib.clockwise
 
