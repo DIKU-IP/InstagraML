@@ -33,10 +33,11 @@ end
 
 structure PicLib : PICLIB = struct
 fun pad4 x = ~4*(~x div 4)
+(* For 0xRRGGBB, returns (0xRR, 0xGG, 0xBB) *)
 fun channels x =
-    (x mod 0x100,
+    ((x div 0x10000) mod 0x100,
      (x div 0x100) mod 0x100,
-     (x div 0x10000) mod 0x100)
+     x mod 0x100)
 
 local
     fun get(s,i) = Word8.toInt(Word8Vector.sub(s,i))
@@ -89,7 +90,7 @@ fun writebmp (w,h,c,t) s = let
     fun write i =
         if i = padw*h then ()
         else let val (r,g,b) = channels(t(i mod w, i div w))
-             in put1 r; put1 g; put1 b;
+             in put1 b; put1 g; put1 r;
                 (* At end of row, we have to pad to the next word
                                      boundary. *)
                 (if (i+1) mod w = 0 then
@@ -110,7 +111,7 @@ fun readBMP s =
 fun writeBMP (s, (w, h, pixel)) =
     let fun pixel' pos =
             let val (r,g,b) = pixel pos
-            in r + g * 0x100 + b * 0x10000 end
+            in b + g * 0x100 + r * 0x10000 end
         val c = Word8Vector.fromList []
     in writebmp (w,h,c,pixel') s end
 
@@ -161,6 +162,10 @@ fun polo(x,y)=(2.0*Math.atan(x/y)/3.1415,Math.sqrt(x*x+y*y)-0.2);
 
 (* Example operations. *)
 val invertColours = PicLib.recolor (fn (r,g,b) => (255-r, 255-g, 255-b))
+
+val desaturate = PicLib.recolor (fn (r,g,b) =>
+                                    let val x = (r+g+b) div 3
+                                    in (x, x, x) end)
 
 val counterClockwise = PicLib.clockwise o PicLib.clockwise o PicLib.clockwise
 
