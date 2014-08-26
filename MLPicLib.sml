@@ -1,11 +1,19 @@
-(* BMP reading/writing stuff originally taken from:
+(*
 
- http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm
+ Simple image manipulation library designed and implemented by Troels
+ Henriksen (athas@sigkill.dk) and Martin Dybdal (dybber@dybber.dk),
+ possibly for the introductionary programmint course at DIKU.  The
+ idea is to use high-level combinators to demonstrate simple
+ functional programming, with a visual result.  This is only suitable
+ for simple tasks.
  *)
 
 (*
- Troels Henriksen (athas@sigkill.dk) modified it to support (only)
-        24-bit bitmaps, with no color map.
+
+ Low-level BMP serialisation stuff originally taken from
+ http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm.  Troels
+ Henriksen modified it to support (only) 24-bit bitmaps, with no color
+ map.
  *)
 
 signature PICLIB = sig
@@ -137,7 +145,8 @@ fun beside (w1,h1,pixel1) (w2,h2,pixel2) =
 val torben = readBMP "torben.bmp"
 end
 
-(* Example transformations (for PicLib.transform) *)
+(* Example transformations (for PicLib.transform), from
+http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm *)
 fun relf(x,y)=(~x:real,y);
 fun blow(x,y) = (x*0.5,y*0.5);
 fun fish(x,y)=let val r=Math.sqrt(x*x+y*y) in (r*x,r*y) end;
