@@ -157,17 +157,17 @@ val pink = (255,100,100)
 
 (* Example transformations (for PicLib.transform), from
 http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm *)
-fun relf(x,y)=(~x:real,y);
-fun blow(x,y) = (x*0.5,y*0.5);
-fun fish(x,y)=let val r=Math.sqrt(x*x+y*y) in (r*x,r*y) end;
-fun unfish p (x,y)=let val r=(Math.sqrt(x*x+y*y)+p)/(1.0+p) in (x/r,y/r) end;
-fun wasp(x,y)=(x/(y*y+1.0)*2.0,y);
-fun fat p (x,y) = (x*(y*y+p)/p,y:real);
-fun rot a (x,y) =let val c=Math.cos a val s=Math.sin a in(x*c-y*s,x*s+y*c)end;
-fun whirl(x,y)=let val r=Math.sqrt(x*x+y*y) in rot (1.0-r)(x,y) end;
-fun wave(x,y)=(x+Math.sin(3.0*y)/4.0,y);
-fun shear(x,y)=(x+y/2.0,y);
-fun polo(x,y)=(2.0*Math.atan(x/y)/3.1415,Math.sqrt(x*x+y*y)-0.2);
+fun relf(x,y)=(~x:real,y)
+fun blow(x,y) = (x*0.5,y*0.5)
+fun fish(x,y)=let val r=Math.sqrt(x*x+y*y) in (r*x,r*y) end
+fun unfish p (x,y)=let val r=(Math.sqrt(x*x+y*y)+p)/(1.0+p) in (x/r,y/r) end
+fun wasp(x,y)=(x/(y*y+1.0)*2.0,y)
+fun fat p (x,y) = (x*(y*y+p)/p,y:real)
+fun rot a (x,y) =let val c=Math.cos a val s=Math.sin a in(x*c-y*s,x*s+y*c)end
+fun whirl(x,y)=let val r=Math.sqrt(x*x+y*y) in rot (1.0-r)(x,y) end
+fun wave(x,y)=(x+Math.sin(3.0*y)/4.0,y)
+fun shear(x,y)=(x+y/2.0,y)
+fun polo(x,y)=(2.0*Math.atan(x/y)/3.1415,Math.sqrt(x*x+y*y)-0.2)
 
 (* Example operations. *)
 val invertColours = PicLib.recolour (fn (r,g,b) => (255-r, 255-g, 255-b))
