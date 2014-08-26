@@ -1,11 +1,11 @@
 (* BMP reading/writing stuff originally taken from:
 
  http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm
-*)
+ *)
 
 (*
  Troels Henriksen (athas@sigkill.dk) modified it to support (only)
- 24-bit bitmaps, with no color map.
+        24-bit bitmaps, with no color map.
  *)
 
 signature PICLIB = sig
@@ -15,20 +15,15 @@ signature PICLIB = sig
     val readBMP : string -> image
     val writeBMP : string * image -> unit
 
-(*
- val recolor : (color -> color) -> image -> image
- val transform : (real*real -> real*real) -> image -> image
- val scale : real -> image -> image
- val beside : image -> image -> image
- val clockwise : image -> image
- val torben : image (* https://www2.adm.ku.dk/selv/pls/prt_www40.hentindhold_cms?p_personid=162114 *)
- *)
+    val recolor : (color -> color) -> image -> image
+    val transform : (real*real -> real*real) -> image -> image
+    val scale : real -> image -> image
+    val clockwise : image -> image
+    val beside : image -> image -> image
+    val torben : image
 end
 
 structure PicLib : PICLIB = struct
-type color = int * int * int
-type image = int * int * ((int*int) -> color)
-
 fun pad4 x = ~4*(~x div 4)
 fun channels x =
     (x mod 0x100,
@@ -80,12 +75,23 @@ fun writebmp (w,h,c,t) s = let
     val () = BinIO.output(fh,header w h c)
     val () = BinIO.output(fh,c)
     val padw = pad4 w
-    fun f i =
-        let val (r,g,b) = channels(t(i mod padw, i div padw))
-        in map Word8.fromInt [r,g,b] end
-    val waste'' = Word8Vector.fromList (List.concat (List.tabulate(padw*h,f)))
-in BinIO.output(fh,waste''); BinIO.closeOut fh end
-end
+    fun put1 x = BinIO.output1(fh, Word8.fromInt x)
+    fun pad 0 = ()
+      | pad n = put1 0 before pad (n-1)
+    fun write i =
+        if i = padw*h then ()
+        else let val (r,g,b) = channels(t(i mod w, i div w))
+             in put1 r; put1 g; put1 b;
+                (* At end of row, we have to pad to the next word
+                                     boundary. *)
+                (if (i+1) mod w = 0 then
+                     pad (padw-w)
+                 else ());
+                write (i+1) end
+in write 0; BinIO.closeOut fh end end
+
+type color = int * int * int
+type image = int * int * ((int*int) -> color)
 
 fun readBMP s =
     let val (w,h,_,t) = readbmp s
@@ -99,4 +105,70 @@ fun writeBMP (s, (w, h, pixel)) =
             in r + g * 0x100 + b * 0x10000 end
         val c = Word8Vector.fromList []
     in writebmp (w,h,c,pixel') s end
+
+fun recolor f (w,h,pixel) = (w,h, f o pixel)
+
+fun transform f (w,h,pixel) =
+    let fun toSq (x,y) = (2.0*real x/real w - 1.0,
+                          2.0*real y/real h - 1.0)
+	fun frmSq(x,y)=(floor ((x+1.0)*real w/2.0),
+                        floor ((y+1.0)*real h/2.0))
+    in (w, h, pixel o frmSq o f o toSq)
+    end
+
+fun scale s (w,h,pixel) =
+    let val w' = floor (real w * s)
+        val h' = floor (real h * s)
+        fun pixel' (x,y) =
+            pixel (floor (real x / s),
+                   floor (real y / s))
+    in (w', h', pixel') end
+
+fun clockwise (w,h,pixel) =
+    let fun swap (x,y) = (w-y-1,x)
+    in (h, w, pixel o swap) end
+
+fun beside (w1,h1,pixel1) (w2,h2,pixel2) =
+    let fun pixel (x,y) = if x < w1
+                          then pixel1 (x,y)
+                          else pixel2 (x-w1,y)
+    in (w1+w2, Int.max(h1,h2), pixel) end
+
+val torben = readBMP "torben.bmp"
 end
+
+(* Example transformations (for PicLib.transform) *)
+fun relf(x,y)=(~x:real,y);
+fun blow(x,y) = (x*0.5,y*0.5);
+fun fish(x,y)=let val r=Math.sqrt(x*x+y*y) in (r*x,r*y) end;
+fun unfish p (x,y)=let val r=(Math.sqrt(x*x+y*y)+p)/(1.0+p) in (x/r,y/r) end;
+fun wasp(x,y)=(x/(y*y+1.0)*2.0,y);
+fun fat p (x,y) = (x*(y*y+p)/p,y:real);
+fun rot a (x,y) =let val c=Math.cos a val s=Math.sin a in(x*c-y*s,x*s+y*c)end;
+fun whirl(x,y)=let val r=Math.sqrt(x*x+y*y) in rot (1.0-r)(x,y) end;
+fun wave(x,y)=(x+Math.sin(3.0*y)/4.0,y);
+fun shear(x,y)=(x+y/2.0,y);
+fun polo(x,y)=(2.0*Math.atan(x/y)/3.1415,Math.sqrt(x*x+y*y)-0.2);
+
+(* Example operations. *)
+val invertColours = PicLib.recolor (fn (r,g,b) => (255-r, 255-g, 255-b))
+
+val counterClockwise = PicLib.clockwise o PicLib.clockwise o PicLib.clockwise
+
+fun below x y =
+    counterClockwise (PicLib.beside (PicLib.clockwise x) (PicLib.clockwise y))
+
+fun four a b c d = PicLib.beside (below a b) (below c d)
+
+fun quad img = four img img img img
+
+fun spiral img 0 = img
+  | spiral img n =
+    let val a = PicLib.scale 0.5 (quad img)
+        val b = PicLib.scale 0.5 (quad a)
+    in PicLib.beside
+           (below img a)
+           (PicLib.clockwise (PicLib.beside b (PicLib.clockwise (spiral (PicLib.scale 0.5 a) (n-1)))))
+    end
+
+(* Try: PicLib.writeBMP ("spiral.bmp", spiral PicLib.torben 10); *)
