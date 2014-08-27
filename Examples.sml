@@ -120,7 +120,7 @@ local
   fun abs (C (a, b)) = Math.sqrt (a*a + b*b)
 
   fun color n = let val v = 255 - 255 - Int.min (n * 5, 255) in (v, v, v) end
-  fun divergence z c 60 = 0
+  fun divergence z c 60 = 60
     | divergence z c i  = let val z' = z ** z ++ c in
                             if abs z' > 4.0
                             then i
