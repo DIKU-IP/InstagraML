@@ -24,6 +24,8 @@ signature INSTAGRAML = sig
 
     val readBMP : string -> image
     val writeBMP : string * image -> unit
+    val width : image -> int
+    val height : image -> int
 
     val recolour : (colour -> colour) -> image -> image
     val transform : (real*real -> real*real) -> image -> image
@@ -102,6 +104,10 @@ in write 0; BinIO.closeOut fh end end
 
 type colour = int * int * int
 type image = int * int * ((int*int) -> colour)
+
+fun width (w, _, _) = w
+
+fun height (_, h, _) = h
 
 fun readBMP s =
     let val (w,h,_,t) = readbmp s
