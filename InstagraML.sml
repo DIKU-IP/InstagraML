@@ -27,6 +27,8 @@ signature INSTAGRAML = sig
     val writeBMP : string * image -> unit
     val width : image -> int
     val height : image -> int
+    val fromFunction : int * int -> (int * int -> colour) -> image
+    val pixel : (int * int) -> image -> colour
 
     val recolour : (colour -> colour) -> image -> image
     val transform : (real*real -> real*real) -> image -> image
@@ -112,44 +114,48 @@ fun height (_, h, _) = h
 
 fun readBMP s =
     let val (w,h,_,t) = readbmp s
-        fun pixel pos =
+        fun f pos =
             channels (t pos)
-    in (w,h, pixel) end
+    in (w,h, f) end
 
-fun writeBMP (s, (w, h, pixel)) =
-    let fun pixel' pos =
-            let val (r,g,b) = pixel pos
+fun writeBMP (s, (w, h, f)) =
+    let fun f' pos =
+            let val (r,g,b) = f pos
             in b + g * 0x100 + r * 0x10000 end
         val c = Word8Vector.fromList []
-    in writebmp (w,h,c,pixel') s end
+    in writebmp (w,h,c,f') s end
 
-fun recolour f (w,h,pixel) = (w,h, f o pixel)
+fun fromFunction (w, h) f = (w, h, f)
 
-fun transform f (w,h,pixel) =
+fun pixel pos (_, _, f) = f pos
+
+fun recolour g (w,h,f) = (w,h, g o f)
+
+fun transform g (w,h,f) =
     let fun toSq (x,y) = (2.0*real x/real w - 1.0,
                           2.0*real y/real h - 1.0)
 	fun frmSq(x,y)=(floor ((x+1.0)*real w/2.0),
                         floor ((y+1.0)*real h/2.0))
-    in (w, h, pixel o frmSq o f o toSq)
+    in (w, h, f o frmSq o g o toSq)
     end
 
-fun scale sx sy (w,h,pixel) =
+fun scale sx sy (w,h,f) =
     let val w' = floor (real w * sx)
         val h' = floor (real h * sy)
-        fun pixel' (x,y) =
-            pixel (floor (real x / sx),
+        fun f' (x,y) =
+            f (floor (real x / sx),
                    floor (real y / sy))
-    in (w', h', pixel') end
+    in (w', h', f') end
 
-fun clockwise (w,h,pixel) =
+fun clockwise (w,h,f) =
     let fun swap (x,y) = (w-y-1,x)
-    in (h, w, pixel o swap) end
+    in (h, w, f o swap) end
 
-fun beside (w1,h1,pixel1) (w2,h2,pixel2) =
-    let fun pixel (x,y) = if x < w1
-                          then pixel1 (x,y)
-                          else pixel2 (x-w1,y)
-    in (w1+w2, Int.max(h1,h2), pixel) end
+fun beside (w1,h1,f1) (w2,h2,f2) =
+    let fun f (x,y) = if x < w1
+                          then f1 (x,y)
+                          else f2 (x-w1,y)
+    in (w1+w2, Int.max(h1,h2), f) end
 end
 
 val counterClockwise = InstagraML.clockwise o InstagraML.clockwise o InstagraML.clockwise
