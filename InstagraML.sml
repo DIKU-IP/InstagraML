@@ -2,8 +2,9 @@
 
  Simple image manipulation library designed and implemented by Troels
  Henriksen (athas@sigkill.dk) and Martin Dybdal (dybber@dybber.dk),
- possibly for the introductionary programmint course at DIKU.  The
- idea is to use high-level combinators to demonstrate simple
+ for the introductionary programming course at DIKU.  
+
+ The idea is to use high-level combinators to demonstrate simple
  functional programming, with a visual result.  This is only suitable
  for simple tasks.
  *)
@@ -151,100 +152,9 @@ fun beside (w1,h1,pixel1) (w2,h2,pixel2) =
     in (w1+w2, Int.max(h1,h2), pixel) end
 end
 
-(* Example transformations (for InstagraML.transform), from
-http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm *)
-fun relf(x,y)=(~x:real,y)
-fun blow(x,y) = (x*0.5,y*0.5)
-fun fish(x,y)=let val r=Math.sqrt(x*x+y*y) in (r*x,r*y) end
-fun unfish p (x,y)=let val r=(Math.sqrt(x*x+y*y)+p)/(1.0+p) in (x/r,y/r) end
-fun wasp(x,y)=(x/(y*y+1.0)*2.0,y)
-fun fat p (x,y) = (x*(y*y+p)/p,y:real)
-fun rot a (x,y) =let val c=Math.cos a val s=Math.sin a in(x*c-y*s,x*s+y*c)end
-fun whirl(x,y)=let val r=Math.sqrt(x*x+y*y) in rot (1.0-r)(x,y) end
-fun wave(x,y)=(x+Math.sin(3.0*y)/4.0,y)
-fun shear(x,y)=(x+y/2.0,y)
-fun polo(x,y)=(2.0*Math.atan(x/y)/3.1415,Math.sqrt(x*x+y*y)-0.2)
-
-(* Example operations. *)
-val invertColours = InstagraML.recolour (fn (r,g,b) => (255-r, 255-g, 255-b))
-
-val desaturate = InstagraML.recolour (fn (r,g,b) =>
-                                    let val x = (r+r+g+g+g+b) div 6
-                                    in (x, x, x) end)
-
 val counterClockwise = InstagraML.clockwise o InstagraML.clockwise o InstagraML.clockwise
 
 fun below x y =
     counterClockwise (InstagraML.beside (InstagraML.clockwise x) (InstagraML.clockwise y))
 
 fun four a b c d = InstagraML.beside (below a b) (below c d)
-
-(* Warhol effect *)
-fun warholEffect image colours =
-  let val n = length colours;
-      val range = 256 div n;
-      fun intensity (r,g,b) = (r+g+b) div 3
-      fun selectColour x = List.nth(colours, Int.min(x div range, n-1));
-  in
-      InstagraML.recolour (selectColour o intensity) image
-  end;
-
-val black   = (0,0,0)
-val white   = (255,255,255)
-val red     = (0,0,255)
-val green   = (0,255,0)
-val blue    = (255,0,0)
-val yellow  = (0,255,255)
-val cyan    = (255,255,0)
-val magenta = (255,0,255)
-val orange  = (0,165,255)
-val pink    = (203,192,255)
-val purple  = (128,0,128)
-
-val colours1 = [purple, pink, pink, cyan]
-val colours2 = [blue, magenta, orange, yellow]
-val colours3 = [red, red, yellow, green]
-val colours4 = [black, red, red, white]
-
-fun warhol img = four (warholEffect img colours1)
-                      (warholEffect img colours2)
-                      (warholEffect img colours3)
-                      (warholEffect img colours4);
-
-fun quad img = four img img img img
-
-fun spiral img 0 = img
-  | spiral img n =
-    let val a = InstagraML.scale 0.5 0.5 (quad img)
-        val b = InstagraML.scale 0.5 0.5 (quad a)
-    in InstagraML.beside
-           (below img a)
-           (InstagraML.clockwise (InstagraML.beside b (InstagraML.clockwise (spiral (InstagraML.scale 0.5 0.5 a) (n-1)))))
-    end
-
-(* Try: InstagraML.writeBMP ("spiral.bmp", spiral (InstagraML.readBMP "torben.bmp") 10); *)
-
-local
-  datatype complex = C of real * real
-  infix 7 **
-  infix 6 ++
-
-  fun (C (a, b)) ** (C (c, d)) = C (a*c-b*d, a*d+b*c)
-  fun (C (a, b)) ++ (C (c, d)) = C (a+c, b+d)
-  fun abs (C (a, b)) = Math.sqrt (a*a + b*b)
-
-  fun color n = let val v = 255 - 255 - Int.min (n * 5, 255) in (v, v, v) end
-  fun divergence z c 60 = 0
-    | divergence z c i  = let val z' = z ** z ++ c in
-                            if abs z' > 4.0
-                            then i
-                            else divergence z' c (i+1)
-                          end
-  fun mandelbrot_ (x,y) =
-    let val a = 3.5 / (x+0.01) - 2.5
-        val b = 3.0 / (y+0.01) - 1.5
-        val c = real (divergence (C (0.0, 0.0)) (C (a, b)) 0) / 50.0
-    in (x*c,y*c) end
-in
-  fun mandelbrot image = InstagraML.transform mandelbrot_ image
-end;
