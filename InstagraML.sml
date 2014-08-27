@@ -12,11 +12,11 @@
 
  Low-level BMP serialisation stuff originally taken from
  http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm.  Troels
- Henriksen modified it to support (only) 24-bit bitmaps, with no color
+ Henriksen modified it to support (only) 24-bit bitmaps, with no colour
  map.
  *)
 
-signature PICLIB = sig
+signature INSTAGRAML = sig
     (* A colour is a triplet of red, green and blue values, in that
     order, each going from 0 to 255. *)
     type colour = int * int * int
@@ -33,7 +33,7 @@ signature PICLIB = sig
     val torben : image
 end
 
-structure PicLib :> PICLIB = struct
+structure InstagraML :> INSTAGRAML = struct
 fun pad4 x = ~4*(~x div 4)
 (* For 0xRRGGBB, returns (0xRR, 0xGG, 0xBB) *)
 fun channels x =
@@ -148,14 +148,7 @@ fun beside (w1,h1,pixel1) (w2,h2,pixel2) =
 val torben = readBMP "torben.bmp"
 end
 
-(* Example colours *)
-
-val red = (255,0,0)
-val green = (0,0,255)
-val blue = (0,0,255)
-val pink = (255,100,100)
-
-(* Example transformations (for PicLib.transform), from
+(* Example transformations (for InstagraML.transform), from
 http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm *)
 fun relf(x,y)=(~x:real,y)
 fun blow(x,y) = (x*0.5,y*0.5)
@@ -170,34 +163,60 @@ fun shear(x,y)=(x+y/2.0,y)
 fun polo(x,y)=(2.0*Math.atan(x/y)/3.1415,Math.sqrt(x*x+y*y)-0.2)
 
 (* Example operations. *)
-val invertColours = PicLib.recolour (fn (r,g,b) => (255-r, 255-g, 255-b))
+val invertColours = InstagraML.recolour (fn (r,g,b) => (255-r, 255-g, 255-b))
 
-val desaturate = PicLib.recolour (fn (r,g,b) =>
+val desaturate = InstagraML.recolour (fn (r,g,b) =>
                                     let val x = (r+g+b) div 3
                                     in (x, x, x) end)
 
-fun warhol colours =
-    let val n = length colours
-        val step = ceil (255.0 / real n)
-        fun newcolour x = List.nth(colours, x div step)
-    in PicLib.recolour (fn (r,g,b) => newcolour ((r+g+b) div 3)) end
-
-val counterClockwise = PicLib.clockwise o PicLib.clockwise o PicLib.clockwise
+val counterClockwise = InstagraML.clockwise o InstagraML.clockwise o InstagraML.clockwise
 
 fun below x y =
-    counterClockwise (PicLib.beside (PicLib.clockwise x) (PicLib.clockwise y))
+    counterClockwise (InstagraML.beside (InstagraML.clockwise x) (InstagraML.clockwise y))
 
-fun four a b c d = PicLib.beside (below a b) (below c d)
+fun four a b c d = InstagraML.beside (below a b) (below c d)
+
+(* Warhol effect *)
+fun warholEffect image colours =
+  let val n = length colours;
+      val range = 256 div n;
+      fun intensity (r,g,b) = (r+g+b) div 3
+      fun selectColour x = List.nth(colours, Int.min(x div range, n-1));
+  in
+      InstagraML.recolour (selectColour o intensity) image
+  end;
+
+val black   = (0,0,0)
+val white   = (255,255,255)
+val red     = (0,0,255)
+val green   = (0,255,0)
+val blue    = (255,0,0)
+val yellow  = (0,255,255)
+val cyan    = (255,255,0)
+val magenta = (255,0,255)
+val orange  = (0,165,255)
+val pink    = (203,192,255)
+val purple  = (128,0,128)
+
+val colours1 = [purple, pink, pink, cyan]
+val colours2 = [blue, magenta, orange, yellow]
+val colours3 = [red, red, yellow, green]
+val colours4 = [black, red, red, white]
+
+fun warhol img = four (warholEffect img colours1)
+                      (warholEffect img colours2)
+                      (warholEffect img colours3)
+                      (warholEffect img colours4);
 
 fun quad img = four img img img img
 
 fun spiral img 0 = img
   | spiral img n =
-    let val a = PicLib.scale 0.5 (quad img)
-        val b = PicLib.scale 0.5 (quad a)
-    in PicLib.beside
+    let val a = InstagraML.scale 0.5 (quad img)
+        val b = InstagraML.scale 0.5 (quad a)
+    in InstagraML.beside
            (below img a)
-           (PicLib.clockwise (PicLib.beside b (PicLib.clockwise (spiral (PicLib.scale 0.5 a) (n-1)))))
+           (InstagraML.clockwise (InstagraML.beside b (InstagraML.clockwise (spiral (InstagraML.scale 0.5 a) (n-1)))))
     end
 
-(* Try: PicLib.writeBMP ("spiral.bmp", spiral PicLib.torben 10); *)
+(* Try: InstagraML.writeBMP ("spiral.bmp", spiral InstagraML.torben 10); *)
