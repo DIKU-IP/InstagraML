@@ -30,7 +30,6 @@ signature INSTAGRAML = sig
     val scale : real -> real -> image -> image
     val clockwise : image -> image
     val beside : image -> image -> image
-    val torben : image
 end
 
 structure InstagraML :> INSTAGRAML = struct
@@ -144,8 +143,6 @@ fun beside (w1,h1,pixel1) (w2,h2,pixel2) =
                           then pixel1 (x,y)
                           else pixel2 (x-w1,y)
     in (w1+w2, Int.max(h1,h2), pixel) end
-
-val torben = readBMP "torben.bmp"
 end
 
 (* Example transformations (for InstagraML.transform), from
@@ -166,7 +163,7 @@ fun polo(x,y)=(2.0*Math.atan(x/y)/3.1415,Math.sqrt(x*x+y*y)-0.2)
 val invertColours = InstagraML.recolour (fn (r,g,b) => (255-r, 255-g, 255-b))
 
 val desaturate = InstagraML.recolour (fn (r,g,b) =>
-                                    let val x = (r+g+b) div 3
+                                    let val x = (r+r+g+g+g+b) div 6
                                     in (x, x, x) end)
 
 val counterClockwise = InstagraML.clockwise o InstagraML.clockwise o InstagraML.clockwise
@@ -219,7 +216,7 @@ fun spiral img 0 = img
            (InstagraML.clockwise (InstagraML.beside b (InstagraML.clockwise (spiral (InstagraML.scale 0.5 0.5 a) (n-1)))))
     end
 
-(* Try: InstagraML.writeBMP ("spiral.bmp", spiral InstagraML.torben 10); *)
+(* Try: InstagraML.writeBMP ("spiral.bmp", spiral (InstagraML.readBMP "torben.bmp") 10); *)
 
 local
   datatype complex = C of real * real
