@@ -23,8 +23,12 @@ fun polo(x,y)=(2.0*Math.atan(x/y)/3.1415,Math.sqrt(x*x+y*y)-0.2)
 (* Recolouring. *)
 val invertColours = InstagraML.recolour (fn (r,g,b) => (255-r, 255-g, 255-b))
 
+(* Green is perceived the most intense by the human eye, red next most
+   intense and blue the least (Remark: this is a very primitive way to
+   extract intensity, but it is efficient and easy to remember) *)
 fun intensity (r,g,b) = (r+r+g+g+g+b) div 6
-val greyscale = InstagraML.recolour (fn x => let val v = intensity x in (v,v,v) end)
+val greyscale = 
+      InstagraML.recolour (fn x => let val v = intensity x in (v,v,v) end)
 
 (* Andy Warhol-effect *)
 fun warholEffect image colours =
