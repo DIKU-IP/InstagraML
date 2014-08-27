@@ -27,7 +27,7 @@ signature INSTAGRAML = sig
 
     val recolour : (colour -> colour) -> image -> image
     val transform : (real*real -> real*real) -> image -> image
-    val scale : real -> image -> image
+    val scale : real -> real -> image -> image
     val clockwise : image -> image
     val beside : image -> image -> image
     val torben : image
@@ -127,12 +127,12 @@ fun transform f (w,h,pixel) =
     in (w, h, pixel o frmSq o f o toSq)
     end
 
-fun scale s (w,h,pixel) =
-    let val w' = floor (real w * s)
-        val h' = floor (real h * s)
+fun scale sx sy (w,h,pixel) =
+    let val w' = floor (real w * sx)
+        val h' = floor (real h * sy)
         fun pixel' (x,y) =
-            pixel (floor (real x / s),
-                   floor (real y / s))
+            pixel (floor (real x / sx),
+                   floor (real y / sy))
     in (w', h', pixel') end
 
 fun clockwise (w,h,pixel) =
@@ -212,11 +212,36 @@ fun quad img = four img img img img
 
 fun spiral img 0 = img
   | spiral img n =
-    let val a = InstagraML.scale 0.5 (quad img)
-        val b = InstagraML.scale 0.5 (quad a)
+    let val a = InstagraML.scale 0.5 0.5 (quad img)
+        val b = InstagraML.scale 0.5 0.5 (quad a)
     in InstagraML.beside
            (below img a)
-           (InstagraML.clockwise (InstagraML.beside b (InstagraML.clockwise (spiral (InstagraML.scale 0.5 a) (n-1)))))
+           (InstagraML.clockwise (InstagraML.beside b (InstagraML.clockwise (spiral (InstagraML.scale 0.5 0.5 a) (n-1)))))
     end
 
 (* Try: InstagraML.writeBMP ("spiral.bmp", spiral InstagraML.torben 10); *)
+
+local
+  datatype complex = C of real * real
+  infix 7 **
+  infix 6 ++
+
+  fun (C (a, b)) ** (C (c, d)) = C (a*c-b*d, a*d+b*c)
+  fun (C (a, b)) ++ (C (c, d)) = C (a+c, b+d)
+  fun abs (C (a, b)) = Math.sqrt (a*a + b*b)
+
+  fun color n = let val v = 255 - 255 - Int.min (n * 5, 255) in (v, v, v) end
+  fun divergence z c 60 = 0
+    | divergence z c i  = let val z' = z ** z ++ c in
+                            if abs z' > 4.0
+                            then i
+                            else divergence z' c (i+1)
+                          end
+  fun mandelbrot_ (x,y) =
+    let val a = 3.5 / (x+0.01) - 2.5
+        val b = 3.0 / (y+0.01) - 1.5
+        val c = real (divergence (C (0.0, 0.0)) (C (a, b)) 0) / 50.0
+    in (x*c,y*c) end
+in
+  fun mandelbrot image = InstagraML.transform mandelbrot_ image
+end;
