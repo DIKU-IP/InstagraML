@@ -15,7 +15,7 @@ struct
           List.tabulate (n, fn j =>
             let val ri = Int.min (x-offset+i, w-1)
                 val rj = Int.min (y-offset+j, h-1) in
-              I.pixel (ri, rj) img
+              I.pixel img (ri, rj)
             end
           )
         )
