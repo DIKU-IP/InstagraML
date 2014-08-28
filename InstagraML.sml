@@ -28,7 +28,7 @@ signature INSTAGRAML = sig
     val width : image -> int
     val height : image -> int
     val fromFunction : int * int -> (int * int -> colour) -> image
-    val pixel : (int * int) -> image -> colour
+    val pixel : image -> (int * int) -> colour
 
     val recolour : (colour -> colour) -> image -> image
     val transform : (real*real -> real*real) -> image -> image
@@ -127,7 +127,7 @@ fun writeBMP (s, (w, h, f)) =
 
 fun fromFunction (w, h) f = (w, h, f)
 
-fun pixel pos (_, _, f) = f pos
+fun pixel (_, _, f) pos = f pos
 
 fun recolour g (w,h,f) = (w,h, g o f)
 
