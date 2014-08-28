@@ -126,11 +126,13 @@ local
             val h = get4(header,0x16)
             val dy = pad4((bitspp * w) div 8)
             fun outrange(x,y)=x<0 orelse y<0 orelse x>=w orelse y>=h
+            val get = case bitspp of
+                          24 => (fn (x,y) => get3(bitMap, dy*y+x*3))
+                        | 32 => (fn (x,y) => get4(bitMap, dy*y+x*4))
+                        | _  => raise Fail "Can only handle 24-bit or 32-bit BMPs"
             fun col(x,y) = if outrange(x,y) then 0 else
-                           get3(bitMap,dy*y+x*3)
-        in if bitspp = 24
-           then (w,h,colTab,col)
-           else raise Domain
+                           get(x,y)
+        in (w,h,colTab,col)
         end
 
     (* width, height, colour table, (x,y)->pixel value, filename *)
