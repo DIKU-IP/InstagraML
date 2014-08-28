@@ -107,30 +107,3 @@ fun sepiaColor (r,g,b) =
 val sepia = InstagraML.recolour sepiaColor;
 
 (* Try: InstagraML.writeBMP ("sepia.bmp", sepia torben); *)
-
-
-(* Mandelbrot fractal *)
-local
-  datatype complex = C of real * real
-  infix 7 **
-  infix 6 ++
-
-  fun (C (a, b)) ** (C (c, d)) = C (a*c-b*d, a*d+b*c)
-  fun (C (a, b)) ++ (C (c, d)) = C (a+c, b+d)
-  fun abs (C (a, b)) = Math.sqrt (a*a + b*b)
-
-  fun color n = let val v = 255 - 255 - Int.min (n * 5, 255) in (v, v, v) end
-  fun divergence z c 60 = 60
-    | divergence z c i  = let val z' = z ** z ++ c in
-                            if abs z' > 4.0
-                            then i
-                            else divergence z' c (i+1)
-                          end
-  fun mandelbrot_ (x,y) =
-    let val a = 3.5 / (x+0.01) - 2.5
-        val b = 3.0 / (y+0.01) - 1.5
-        val c = real (divergence (C (0.0, 0.0)) (C (a, b)) 0) / 50.0
-    in (x*c,y*c) end
-in
-  fun mandelbrot image = InstagraML.transform mandelbrot_ image
-end
