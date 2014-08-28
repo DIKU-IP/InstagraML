@@ -4,6 +4,15 @@ use "InstagraML.sml";
    loaded:  *)
 val torben = InstagraML.readBMP "torben.bmp";
 
+(* Some convenient positioning operations. *)
+val counterClockwise = InstagraML.clockwise o InstagraML.clockwise o InstagraML.clockwise
+
+fun below x y =
+    counterClockwise (InstagraML.beside (InstagraML.clockwise x) (InstagraML.clockwise y))
+
+fun four a b c d = InstagraML.beside (below a b) (below c d)
+
+
 (* Example transformations (for InstagraML.transform), from
 http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm *)
 fun relf(x,y)=(~x:real,y)

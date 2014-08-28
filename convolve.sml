@@ -1,6 +1,6 @@
 ;use "InstagraML.sml";
 
-functor ConvolutionFn (I : INSTAGRAML) =
+functor ConvolutionFn (I : IMAGE) =
 struct
   open I
 
@@ -49,7 +49,7 @@ struct
   end
 end
 
-structure I = ConvolutionFn(InstagraML);
+structure I = ConvolutionFn(DelayedImage);
 
 val gaussianBlur = [[1.0,2.0,1.0],[2.0,4.0,2.0],[1.0,2.0,1.0]];
 val boxBlur = [[1.0,1.0,1.0],[1.0,1.0,1.0],[1.0,1.0,1.0]];
@@ -60,12 +60,12 @@ fun motionBlur n =
       if n-i = j then 1.0 else 0.0
     ))
 
-val torben = I.readBMP "torben.bmp";
+val torben = InstagraML.readBMP "torben.bmp";
 val blurredtorben = I.convolve torben gaussianBlur;
-val _ = I.writeBMP ("torbenblur.bmp", blurredtorben);
+val _ = InstagraML.writeBMP ("torbenblur.bmp", blurredtorben);
 val embossedtorben = I.convolve torben emboss;
-val _ = I.writeBMP ("torbenemboss.bmp", embossedtorben);
+val _ = InstagraML.writeBMP ("torbenemboss.bmp", embossedtorben);
 val edgytorben = I.convolve torben highPass;
-val _ = I.writeBMP ("torbenedgy.bmp", edgytorben);
+val _ = InstagraML.writeBMP ("torbenedgy.bmp", edgytorben);
 val speedytorben = I.convolve torben (motionBlur 9);
-val _ = I.writeBMP ("torbenfasttorbenfurious.bmp", speedytorben);
+val _ = InstagraML.writeBMP ("torbenfasttorbenfurious.bmp", speedytorben);
