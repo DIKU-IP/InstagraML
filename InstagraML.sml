@@ -22,8 +22,8 @@ signature IMAGE = sig
 
     val width : image -> int
     val height : image -> int
-    val fromFunction : int * int -> (int * int -> colour) -> image
-    val pixel : image -> (int * int) -> colour
+    val fromFunction : int * int * (int * int -> colour) -> image
+    val toFunction : image -> int * int * (int * int -> colour)
 end
 
 structure DelayedImage :> IMAGE = struct
@@ -32,8 +32,8 @@ structure DelayedImage :> IMAGE = struct
 
     fun width (w,_,_) = w
     fun height (_,h,_) = h
-    fun fromFunction (w,h) f = (w,h,f)
-    fun pixel (_,_,f) = f
+    fun fromFunction (w,h,f) = (w,h,f)
+    fun toFunction img = img
 end
 
 signature TRANSFORM = sig
@@ -53,41 +53,39 @@ type colour = int * int * int
 type image = I.image
 
 fun recolour f img =
-    I.fromFunction (I.width img, I.height img) (f o I.pixel img)
+    let val (w, h, g) = I.toFunction img
+    in I.fromFunction (w, h, f o g) end
 
 fun transform f img =
-    let val w = I.width img
-        val h = I.height img
+    let val (w,h, g) = I.toFunction img
         fun toSq (x,y) = (2.0*real x/real w - 1.0,
                           2.0*real y/real h - 1.0)
 	fun frmSq (x,y) = (floor ((x+1.0)*real w/2.0),
                            floor ((y+1.0)*real h/2.0))
-    in I.fromFunction (w, h) (I.pixel img o frmSq o f o toSq)
+    in I.fromFunction (w, h, g o frmSq o f o toSq)
     end
 
 fun scale sx sy img =
-    let val w = I.width img
-        val h = I.height img
+    let val (w,h,f) = I.toFunction img
         val w' = floor (real w * sx)
         val h' = floor (real h * sy)
         fun f' (x,y) =
-            I.pixel img (floor (real x / sx),
-                         floor (real y / sy))
-    in I.fromFunction (w', h') f' end
+            f (floor (real x / sx),
+               floor (real y / sy))
+    in I.fromFunction (w', h', f') end
 
 fun clockwise img =
-    let fun rotate (x,y) = (I.width img-y-1,x)
-    in I.fromFunction (I.height img, I.width img) (I.pixel img o rotate) end
+    let val (w,h,f) = I.toFunction img
+        fun rotate (x,y) = (w-y-1,x)
+    in I.fromFunction (w, h, f o rotate) end
 
 fun beside img1 img2 =
-    let val w1 = I.width img1
-        val h1 = I.height img1
-        val w2 = I.width img2
-        val h2 = I.height img2
+    let val (w1,h1,f1) = I.toFunction img1
+        val (w2,h2,f2) = I.toFunction img2
         fun f (x,y) = if x < w1
-                      then I.pixel img1 (x,y)
-                      else I.pixel img2 (x-w1,y)
-    in I.fromFunction (w1+w2, Int.max(h1,h2)) f end
+                      then f1 (x,y)
+                      else f2 (x-w1,y)
+    in I.fromFunction (w1+w2, Int.max(h1,h2), f) end
 end
 
 (* BMP serialisation functor *)
@@ -159,17 +157,15 @@ fun readBMP s =
     let val (w,h,_,t) = readbmp s
         fun f pos =
             channels (t pos)
-    in I.fromFunction (w,h) f end
+    in I.fromFunction (w, h, f) end
 
 fun writeBMP (s, img) =
-    let fun f' pos =
-            let val (r,g,b) = I.pixel img pos
+    let val (w,h,f) = I.toFunction img
+        fun f' pos =
+            let val (r,g,b) = f pos
             in b + g * 0x100 + r * 0x10000 end
         val c = Word8Vector.fromList []
-    in writebmp (I.width img,
-                 I.height img,
-                 c,
-                 f') s
+    in writebmp (w, h, c, f') s
     end
 end
 end
@@ -184,7 +180,7 @@ in
 val width = DelayedImage.width
 val height = DelayedImage.height
 val fromFunction = DelayedImage.fromFunction
-val pixel = DelayedImage.pixel
+val toFunction = DelayedImage.toFunction
 
 (* Simple manipulations. *)
 val recolour = InstagraML.recolour

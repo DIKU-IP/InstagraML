@@ -9,13 +9,13 @@ struct
   local
     fun extractRegion img (x, y) n =
       let val offset = n div 2
-          val w = I.width img
-          val h = I.height img in
+          val (w,h,f) = I.toFunction img
+      in
         List.tabulate (n, fn i =>
           List.tabulate (n, fn j =>
             let val ri = Int.min (x-offset+i, w-1)
                 val rj = Int.min (y-offset+j, h-1) in
-              I.pixel img (ri, rj)
+              f (ri, rj)
             end
           )
         )
@@ -41,10 +41,11 @@ struct
   in
     fun convolve img kernel =
       let val n = length kernel in
-        I.fromFunction (I.width img, I.height img)
-        (fn (i, j) =>
-            doConvolve (map (map realify) (extractRegion img (i, j) n))
-                      kernel (0.0, 0.0, 0.0) 0.0)
+        I.fromFunction
+        (I.width img, I.height img,
+         (fn (i, j) =>
+             doConvolve (map (map realify) (extractRegion img (i, j) n))
+                        kernel (0.0, 0.0, 0.0) 0.0))
       end
   end
 end
