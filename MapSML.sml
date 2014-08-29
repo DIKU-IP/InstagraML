@@ -28,8 +28,7 @@ fun line ((x0, y0), (x1,y1)) =
 fun drawline img colour = drawpoints img colour o line;
 
 (* Mercator projection *)
-fun gudermann (longi0 : real) (lati, longi) = 
-      (longi - longi0,
-       Math.ln (Math.tan (Math.pi/4.0 + lati / 2.0)))
-
-val cph_map = InstagraML.readBMP "cphmap.bmp";
+fun deg2rad x = x * Math.pi/180.0
+fun rad2deg x = x * 180.0/Math.pi
+fun gudermann lati = 
+      rad2deg (Math.ln (Math.tan (Math.pi/4.0 + deg2rad lati / 2.0)))
