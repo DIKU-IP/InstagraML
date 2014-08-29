@@ -77,7 +77,7 @@ fun scale sx sy img =
 fun clockwise img =
     let val (w,h,f) = I.toFunction img
         fun rotate (x,y) = (w-y-1,x)
-    in I.fromFunction (w, h, f o rotate) end
+    in I.fromFunction (h, w, f o rotate) end
 
 fun beside img1 img2 =
     let val (w1,h1,f1) = I.toFunction img1
