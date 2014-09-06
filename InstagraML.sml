@@ -178,6 +178,9 @@ local
     structure BMP = BMPFN(DelayedImage);
     structure InstagraML = TransformFN(DelayedImage)
 in
+
+type image = InstagraML.image
+
 (* Basic image interaction *)
 val width = DelayedImage.width
 val height = DelayedImage.height
