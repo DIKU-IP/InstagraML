@@ -1,9 +1,12 @@
-(* Diverse effekter til InstagraML. Kræver at InstagraML er indlæst
- * først. *)
+(*********************)
+(**  Misc. Effects  **)
+(*********************)
 
 (* Sepia tone filter
  *
- *     sepia : image -> image
+ *  sepia : image -> image
+ *
+ *  Try: InstagraML.writeBMP ("sepia.bmp", sepia image);
  *)
 local
   fun sepiaColor (r,g,b) =
@@ -23,8 +26,11 @@ in
   val sepia = InstagraML.recolour sepiaColor
 end
 
-(* Use these with InstagraML.transform:
- *   Example: "InstagraML.transform (rotate (Math.pi/4.0)) image"
+
+(* Use functions with InstagraML.transform:
+ *   Try: InstagraML.transform fish image
+ *   Try: InstagraML.transform whirl image
+ *   Try: InstagraML.transform (rotate (Math.pi/4.0)) image
  *)
 fun zoom (x,y)     = (x*0.5,y*0.5);
 fun fish (x,y)     = let val r = Math.sqrt(x*x+y*y) in (r*x,r*y) end
@@ -47,11 +53,20 @@ val invertColours = InstagraML.recolour (fn (r,g,b) => (255-r, 255-g, 255-b))
  *)
 fun intensity (r,g,b) = (r+r+g+g+g+b) div 6
 
-(* Greyscale version of an image *)
+(* Greyscale version of an image
+ *
+ *  greyscale : image -> image
+ *
+ *  Try: InstagraML.writeBMP ("greyscale.bmp", greyscale image);
+ *)
 val greyscale = 
       InstagraML.recolour (fn x => let val v = intensity x in (v,v,v) end)
 
-(* Andy Warhol-effect *)
+(* Andy Warhol-effect
+ *
+ * Try: 
+ *   warholEffect img [RGB.blue, RGB.magenta, RGB.orange, RGB.yellow]
+ *)
 fun warholEffect image colours =
   let val n = length colours
       val range = 256 div n
@@ -60,10 +75,6 @@ fun warholEffect image colours =
   in
       InstagraML.recolour (selectColour o intensity) image
   end;
-
-(* Example: 
-    warholEffect img [RGB.blue, RGB.magenta, RGB.orange, RGB.yellow] *)
-
 
 (* Spiral fractal of an image, diminishing in size. The integer
  * parameter controls how many times to repeat, should be at least "2"
@@ -75,21 +86,19 @@ fun warholEffect image colours =
  * functionality.
  *)
 local
-  fun quad img = 
-        let val x = InstagraML.clockwise (InstagraML.beside (img, img))
-        in InstagraML.beside (x, x) end
+    (* Open InstagraML-structure so we don't need to prefix everything
+     * with "InstagraML." *)
+    open InstagraML;
+    fun quad img = 
+      let val x = clockwise (beside (img, img))
+      in beside (x, x) end
 in
 fun spiral img 0 = img
   | spiral img n =
-    let val a = InstagraML.scale 0.5 0.5 (quad img)
-        val b = InstagraML.scale 0.5 0.5 (quad a)
-    in InstagraML.beside
-           ((InstagraML.clockwise 
-               (InstagraML.clockwise 
-                  (InstagraML.clockwise (InstagraML.beside (img, a))))),
-           (InstagraML.clockwise 
-              (InstagraML.beside 
-                 (b, (InstagraML.clockwise 
-                        (spiral (InstagraML.scale 0.5 0.5 a) (n-1)))))))
+    let val a = scale 0.5 0.5 (quad img)
+        val b = scale 0.5 0.5 (quad a)
+    in beside
+           ((clockwise (clockwise (clockwise (beside (img, a))))),
+           (clockwise (beside (b, (clockwise (spiral (scale 0.5 0.5 a) (n-1)))))))
     end
 end;
