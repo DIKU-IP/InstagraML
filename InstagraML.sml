@@ -199,3 +199,21 @@ val readBMP = BMP.readBMP
 val writeBMP = BMP.writeBMP
 end
 end
+
+(* Simple non-functor instantiations. *)
+structure RGB = struct
+
+val black   = (0,0,0)
+val white   = (255,255,255)
+val red     = (255,0,0)
+val green   = (0,255,0)
+val blue    = (0,0,255)
+val yellow  = (255,255,0)
+val cyan    = (0,255,255)
+val magenta = (255,0,255)
+val orange  = (255,165,0)
+val pink    = (255,192,203)
+val purple  = (128,0,128)
+
+end
+
