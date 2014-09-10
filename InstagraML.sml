@@ -187,6 +187,9 @@ val height = DelayedImage.height
 val fromFunction = DelayedImage.fromFunction
 val toFunction = DelayedImage.toFunction
 
+(* An empty 1x1 image *)
+fun pixel colour = fromFunction (1,1, fn _ => colour)
+
 (* Simple manipulations. *)
 val recolour = InstagraML.recolour
 val transform = InstagraML.transform
