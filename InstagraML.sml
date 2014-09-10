@@ -1,17 +1,19 @@
-(* Simple image manipulation library designed and implemented by
- Troels Henriksen (athas@sigkill.dk) and Martin Dybdal
- (dybber@dybber.dk), for the introductionary programming course at
- DIKU.
-
- The idea is to use high-level combinators to demonstrate simple
-functional programming, with a visual result.  This is only suitable
-for simple tasks.
- *)
-
-(* Low-level BMP serialisation stuff originally taken from
- http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm.  Troels
- Henriksen modified it to support (only) 24-bit bitmaps, with no
- colour map.
+(* InstagraML
+ * ========== 
+ * A simple image manipulation library designed and implemented by
+ * Troels Henriksen (athas@sigkill.dk) and Martin Dybdal
+ * (dybber@dybber.dk), for the introductionary programming course at
+ * DIKU.
+ *
+ * The idea is to use high-level combinators to demonstrate simple
+ * functional programming, with a visual result. This is
+ * only suitable for simple tasks.
+ *
+ *
+ * Low-level BMP serialisation originally taken from
+ * http://www.soc.napier.ac.uk/~cs66/course-notes/sml/bmp.htm.  Troels
+ * Henriksen modified it to support (only) 24-bit bitmaps, with no
+ * colour map.
  *)
 
 signature IMAGE = sig
@@ -44,7 +46,7 @@ signature TRANSFORM = sig
     val transform : (real*real -> real*real) -> image -> image
     val scale : real -> real -> image -> image
     val clockwise : image -> image
-    val beside : image -> image -> image
+    val beside : image * image -> image
 end
 
 functor TransformFN (I : IMAGE)
@@ -79,7 +81,7 @@ fun clockwise img =
         fun rotate (x,y) = (w-y-1,x)
     in I.fromFunction (h, w, f o rotate) end
 
-fun beside img1 img2 =
+fun beside (img1, img2) =
     let val (w1,h1,f1) = I.toFunction img1
         val (w2,h2,f2) = I.toFunction img2
         fun f (x,y) = if x < w1
