@@ -21,9 +21,6 @@ fun subtract x xs = foldl op-- x xs
 
 val emptyShape = fn _ => false
 
-(* An empty image to draw upon *)
-fun emptyImage (w,h) colour = InstagraML.fromFunction (w,h, fn _ => colour)
-
 (* Draw a shape (sh) on top of an image (img) in the specified
  * colour. *)
 fun drawShape colour img sh = 
