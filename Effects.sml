@@ -27,11 +27,7 @@ in
 end
 
 
-(* Use functions with InstagraML.transform:
- *   Try: InstagraML.transform fish image
- *   Try: InstagraML.transform whirl image
- *   Try: InstagraML.transform (rotate (Math.pi/4.0)) image
- *)
+(* Some functions to be used together with InstagraML.transform: *)
 fun zoom (x,y)     = (x*0.5,y*0.5);
 fun fish (x,y)     = let val r = Math.sqrt(x*x+y*y) in (r*x,r*y) end
 fun rotate a (x,y) = let val c = Math.cos a
@@ -39,6 +35,18 @@ fun rotate a (x,y) = let val c = Math.cos a
                      in (x*c-y*s, x*s+y*c) end
 fun unfish p (x,y) = let val r = (Math.sqrt(x*x+y*y)+p)/(1.0+p) in (x/r, y/r) end
 fun whirl (x,y)    = let val r = Math.sqrt(x*x+y*y) in rotate (1.0-r) (x,y) end
+
+
+(* Some funky effects using InstagraML.transform
+ *   Try: zoomEffect image
+ *   Try: fishEffect image
+ *   Try: rotate45degrees image
+ *)
+
+val zoomEffect  = InstagraML.transform zoom;
+val fishEffect  = InstagraML.transform fish;
+val whirlEffect = InstagraML.transform whirl;
+val rotate45degrees = InstagraML.transform (rotate (Math.pi/4.0));
 
 (* Invert colours *)
 val invertColours = InstagraML.recolour (fn (r,g,b) => (255-r, 255-g, 255-b))
@@ -93,12 +101,15 @@ local
       let val x = clockwise (beside (img, img))
       in beside (x, x) end
 in
-fun spiral img 0 = img
+
+(* Spiral fractal *)
+fun spiral img 0 = quad (scale 0.5 0.5 (quad img))
   | spiral img n =
     let val a = scale 0.5 0.5 (quad img)
         val b = scale 0.5 0.5 (quad a)
-    in beside
-           ((clockwise (clockwise (clockwise (beside (img, a))))),
-           (clockwise (beside (b, (clockwise (spiral (scale 0.5 0.5 a) (n-1)))))))
+    in InstagraML.beside
+           ((clockwise o clockwise o clockwise o beside) (clockwise img, clockwise a),
+           ((clockwise o clockwise o clockwise o beside) ((clockwise o clockwise o clockwise) 
+                                                              (spiral (InstagraML.scale 0.5 0.5 a) (n-1)), clockwise b)))
     end
 end;
