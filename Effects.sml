@@ -90,8 +90,9 @@ fun warholEffect image colours =
  *
  * The dimensions of the output is double the dimensions of the input.
  *
- * The function is on purpose a bit hard to read, to obfuscate some basic
- * functionality.
+ * The function is on purpose a bit hard to read, to obfuscate some
+ * basic functionality. We could have made additional helper
+ * functions, to improve readability.
  *)
 local
     (* Open InstagraML-structure so we don't need to prefix everything
@@ -108,8 +109,8 @@ fun spiral img 0 = quad (scale 0.5 0.5 (quad img))
     let val a = scale 0.5 0.5 (quad img)
         val b = scale 0.5 0.5 (quad a)
     in InstagraML.beside
-           ((clockwise o clockwise o clockwise o beside) (clockwise img, clockwise a),
-           ((clockwise o clockwise o clockwise o beside) ((clockwise o clockwise o clockwise) 
-                                                              (spiral (InstagraML.scale 0.5 0.5 a) (n-1)), clockwise b)))
+           ((clockwise (clockwise (clockwise (beside (clockwise img, clockwise a))))),
+           ((clockwise (clockwise (clockwise (beside ((clockwise (clockwise (clockwise
+            (spiral (InstagraML.scale 0.5 0.5 a) (n-1))))), clockwise b)))))))
     end
 end;
