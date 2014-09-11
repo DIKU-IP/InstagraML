@@ -47,6 +47,7 @@ signature TRANSFORM = sig
     val scale : real -> real -> image -> image
     val clockwise : image -> image
     val beside : image * image -> image
+    val overlay : real * (real, real) -> image -> image -> image
 end
 
 functor TransformFN (I : IMAGE)
@@ -87,7 +88,16 @@ fun beside (img1, img2) =
         fun f (x,y) = if x < w1
                       then f1 (x,y)
                       else f2 (x-w1,y)
-    in I.fromFunction (w1+w2, Int.max(h1,h2), f) end
+    in I.fromFunction (w1+w2, Int.min(h1,h2), f) end
+
+(* fun overlay alpha (x,y) img img = *)
+(*     let val (w1,h1,f1) = I.toFunction img1 *)
+(*         val (w2,h2,f2) = I.toFunction img2 *)
+(*         fun f (x,y) = if x1 < x andalso x < x2 andalso *)
+(*                          y1 < y andalso y < y2 *)
+(*                       then f2 () *)
+(*                       else f1 (x,y) *)
+(*     in I.fromFunction (w1+w2, Int.max(h1,h2), f) end *)
 end
 
 (* BMP serialisation functor *)
