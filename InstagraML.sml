@@ -47,7 +47,7 @@ signature TRANSFORM = sig
     val scale : real -> real -> image -> image
     val clockwise : image -> image
     val beside : image * image -> image
-    val overlay : real * (real, real) -> image -> image -> image
+    (* val overlay : real * (real * real) -> image -> image -> image *)
 end
 
 functor TransformFN (I : IMAGE)
