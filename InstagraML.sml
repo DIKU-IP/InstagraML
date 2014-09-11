@@ -124,7 +124,7 @@ local
         Word8Vector.fromList(map(Word8.fromInt o ord) [#"B",#"M"]),
         mk4((pad4 w)*h*3+size c+54),
         mk4 0, mk4 (size c+54), mk4 (40+size c),
-        mk4 w,  mk4 h,  mk2 1,  mk2 24, mk4 0,  mk4 ((pad4 w)*3*h),
+        mk4 w,  mk4 h,  mk2 1,  mk2 32, mk4 0,  mk4 (w*h*4),
         mk4 2834, mk4 2834, mk4 0, mk4 0] end
     fun readbmp s =
         let
@@ -154,16 +154,10 @@ local
             val () = BinIO.output(fh,c)
             val padw = pad4 w
             fun put1 x = BinIO.output1(fh, Word8.fromInt x)
-            fun pad 0 = ()
-              | pad n = put1 0 before pad (n-1)
             fun write i =
                 if i = padw*h then ()
                 else let val (r,g,b) = channels(t(i mod w, i div w))
-                     in put1 b; put1 g; put1 r;
-                        (* At end of row, we have to pad to the next word boundary. *)
-                        (if (i+1) mod w = 0 then
-                             pad (padw-w)
-                         else ());
+                     in put1 b; put1 g; put1 r; put1 0;
                         write (i+1) end
         in write 0; BinIO.closeOut fh end
 in
