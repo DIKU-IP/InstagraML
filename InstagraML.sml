@@ -47,7 +47,7 @@ signature TRANSFORM = sig
     val scale : real -> real -> image -> image
     val clockwise : image -> image
     val beside : image * image -> image
-    val overlay : real * (real, real) -> image -> image -> image
+    val overlay : real -> (int * int) -> image -> image -> image
 end
 
 functor TransformFN (I : IMAGE)
@@ -90,14 +90,24 @@ fun beside (img1, img2) =
                       else f2 (x-w1,y)
     in I.fromFunction (w1+w2, Int.min(h1,h2), f) end
 
-(* fun overlay alpha (x,y) img img = *)
-(*     let val (w1,h1,f1) = I.toFunction img1 *)
-(*         val (w2,h2,f2) = I.toFunction img2 *)
-(*         fun f (x,y) = if x1 < x andalso x < x2 andalso *)
-(*                          y1 < y andalso y < y2 *)
-(*                       then f2 () *)
-(*                       else f1 (x,y) *)
-(*     in I.fromFunction (w1+w2, Int.max(h1,h2), f) end *)
+fun alphaBlend alpha (r1,g1,b1) (r2,g2,b2) = 
+    let fun blend x y =
+              Int.min(255, round (real y * alpha +
+                                  real x * (1.0 - alpha)))
+    in (blend r1 r2,
+        blend g1 g2,
+        blend b1 b2)
+    end
+
+fun overlay alpha (originx, originy) imgbelow imgabove =
+    let val (w1,h1,f1) = I.toFunction imgbelow
+        val (w2,h2,f2) = I.toFunction imgabove
+        fun f (x,y) = if originx < x andalso x < originx + w2 andalso
+                         originy < y andalso y < h2 + originy
+                      then alphaBlend alpha (f1 (x,y)) 
+                                            (f2 (x-originx,y-originy))
+                      else f1 (x,y)
+    in I.fromFunction (w1, h1, f) end
 end
 
 (* BMP serialisation functor *)
@@ -202,6 +212,7 @@ val transform = InstagraML.transform
 val scale = InstagraML.scale
 val clockwise = InstagraML.clockwise
 val beside = InstagraML.beside
+val overlay = InstagraML.overlay
 
 (* BMP reading functions. *)
 val readBMP = BMP.readBMP
